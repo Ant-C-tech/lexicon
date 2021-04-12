@@ -1,7 +1,5 @@
 # Lexicon
 
----
-
 ## The target audience
 
 Students of educational institutions, technical specialists.
