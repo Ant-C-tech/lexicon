@@ -10,8 +10,8 @@ To make the user's work with academic, technical and artistic texts in English m
 
 ## API
 
-Translating: Google Cloud Translation API.
-Academic dictionaries: Merriam-Webster Dictionary API. 
+* Translating: Google Cloud Translation API.
+* Academic dictionaries: Merriam-Webster Dictionary API. 
 
 ## Application functionality
 
