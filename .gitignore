@@ -1,0 +1,23 @@
+## IDE specific
+.idea/
+.DS_Store
+DS_Store?
+.vscode/
+
+## Chores
+.eslintcache
+
+## Building
+node_modules/
+dist/
+.cache
+.history
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## Other
+Desktop.ini
+Thumbs.db
+._*
+tmp/
