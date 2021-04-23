@@ -10,8 +10,8 @@ To make the user's work with academic, technical and artistic texts in English m
 
 ## API
 
-* Translating: Google Cloud Translation API.
-* Academic dictionaries: Merriam-Webster Dictionary API.
+- Translating: Google Cloud Translation API.
+- Academic dictionaries: Merriam-Webster Dictionary API.
 
 ## Application functionality
 
@@ -19,19 +19,19 @@ After launching the application, the user is able to enter (paste) a piece of te
 
 ## Main features
 
-* online translation of a given text fragment;
-* access to the academic dictionary from the operating window of the application by clicking on any word from the given fragment;
-* choice of the used academic dictionary;
-* the ability to listen to the pronunciation of the selected word;
-* access to a set of dictionary cards which was viewing from the current device;
+- online translation of a given text fragment;
+- access to the academic dictionary from the operating window of the application by clicking on any word from the given fragment;
+- choice of the used academic dictionary;
+- the ability to listen to the pronunciation of the selected word;
+- access to a set of dictionary cards which was viewing from the current device;
 
 ## Non-functional capabilities
 
-* the application is displayed correctly in the latest versions of Chrome, Mozilla, Opera, Safari browsers;
-* the application is displayed correctly on the screens of the most popular mobile devices (except watches);
+- the application is displayed correctly in the latest versions of Chrome, Mozilla, Opera, Safari browsers;
+- the application is displayed correctly on the screens of the most popular mobile devices (except watches);
 
 ## Prospective directions of application development
 
-* Providing a wider choice of dictionaries (implementation of Oxford Learner's Dictionaries API is a priority);
-* The ability of the user to form his own dictionary based on the results of requests to the Merriam-Webster dictionaries;
-* Ability to work with images (text recognition).
+- Providing a wider choice of dictionaries (implementation of Oxford Learner's Dictionaries API is a priority);
+- The ability of the user to form his own dictionary based on the results of requests to the Merriam-Webster dictionaries;
+- Ability to work with images (text recognition).

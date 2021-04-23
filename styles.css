@@ -37,6 +37,14 @@ button {
   resize: none;
   background: rgb(226, 226, 225);
   border: none;
+
+  transition: background ease-in-out 0.5s;
+}
+
+.inputTextBlock__textarea:focus {
+  background: rgb(255, 240, 222);
+  outline: none;
+  border-radius: 5px;
 }
 
 .inputTextBlock__textarea::-webkit-scrollbar {
