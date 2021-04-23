@@ -1,0 +1,33 @@
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  max-width: 1980px;
+  margin: 0 auto;
+  padding: 20px;
+
+  background: url('./img/bg.jpg');
+  overflow: hidden;
+}
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 70px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(40, 111, 113, 1) 0%, rgba(28, 79, 80, 1) 100%);
+}
