@@ -66,22 +66,31 @@ const dictionaryCardBlock = () => {
   </div>
   </div>`;
 };
-// const dictionarySwitch = currentDictionary => {
-//   return window.dataStore.dictionarySet
-//     .map(dictionary => {
-//       return `<input type="radio"
-//               id="${dictionary['type']}"
-//               value="${dictionary['type']}"
-//               name="dictionary"
-//               ${dictionary['type'] === currentDictionary ? 'checked' : ''}
-//               onchange="${currentDictionary} = this.value"
-//             />
-//             <label for="${dictionary['type']}">
-//               ${dictionary['name']}
-//             </label>`;
-//     })
-//     .join('');
-// };
+
+const dictionarySwitch = currentDictionary => {
+  return window.dataStore.dictionarySet
+    .map(dictionary => {
+      return `<label>
+                <input
+                class="${styles.footer__radioInput}"
+                type="radio"
+                id="${dictionary['type']}"
+                value="${dictionary['type']}"
+                name="dictionary"
+                ${dictionary['type'] === window.dataStore.currentDictionary ? 'checked' : ''}
+                onchange="window.dataStore.currentDictionary = this.value"
+                />
+                <span class="${styles.footer__dictionarySwitchButton}">${dictionary['name']}</span>
+              </label>`;
+    })
+    .join('');
+};
+
+const footer = () => {
+  return `<footer class="${styles.footer}">
+  ${dictionarySwitch()}
+  </footer>`;
+};
 
 const app = () => {
   return `
@@ -93,6 +102,7 @@ const app = () => {
   ${activeTextBlock()}
   <br/>
   ${dictionaryCardBlock()}
+  ${footer()}
   `;
 };
 

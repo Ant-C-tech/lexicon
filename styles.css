@@ -30,8 +30,7 @@ hr {
   display: flex;
   flex-wrap: wrap;
 
-  margin: -20px;
-  padding-top: 70px;
+  margin: 0 -20px;
 }
 
 .appRoot__item {
@@ -185,4 +184,63 @@ button {
 .wordCard__defExample {
   font-size: 16px;
   color: bisque;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: linear-gradient(180deg, rgba(40, 111, 113, 1) 0%, rgba(28, 79, 80, 1) 100%);
+}
+
+.visually_hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+.footer__radioInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+.footer__dictionarySwitchButton {
+  margin: 65px;
+  padding: 10px;
+
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 20px;
+  background-color: rgb(226, 226, 225);
+  border-radius: 2px;
+
+  transition: background ease-in-out 0.3s;
+}
+
+.footer__dictionarySwitchButton:hover {
+  cursor: pointer;
+  border: 2;
+  background-color: rgb(187, 187, 187);
+}
+
+.footer__radioInput:checked + .footer__dictionarySwitchButton {
+  background-color: bisque;
+  cursor: auto;
 }
