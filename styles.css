@@ -50,7 +50,7 @@ button {
   padding: 10px;
 }
 
-.inputTextBlock__textarea {
+.inputBlock__textarea {
   width: 100%;
 
   margin-bottom: 10px;
@@ -63,23 +63,23 @@ button {
   transition: background ease-in-out 0.5s;
 }
 
-.inputTextBlock__textarea:focus {
+.inputBlock__textarea:focus {
   background: rgb(255, 240, 222);
   outline: none;
   border-radius: 5px;
 }
 
-.inputTextBlock__textarea::-webkit-scrollbar {
+.inputBlock__textarea::-webkit-scrollbar {
   width: 5px;
 }
 
-.inputTextBlock__textarea::-webkit-scrollbar-track {
+.inputBlock__textarea::-webkit-scrollbar-track {
   margin-left: 10px;
   background-color: rgb(226, 226, 225);
   border-radius: 2px;
 }
 
-.inputTextBlock__textarea::-webkit-scrollbar-thumb {
+.inputBlock__textarea::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(40, 111, 113, 1) 0%, rgba(28, 79, 80, 1) 100%);
   border-radius: 2px;
 }

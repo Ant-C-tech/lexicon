@@ -1,9 +1,10 @@
 'use strict';
 
-import { getTranslation } from './utils.js';
-import { createActiveText } from './utils.js';
-import { getWordInformation } from './utils.js';
+import { translationResponses } from './translation-responses.js';
+import { wordInformationCollegiateResponse } from './word-information-collegiate-responses.js';
+
 import styles from './styles.css';
+
 import wmCover from './img/mw-cover.jpg';
 import logo from './img/logo.svg';
 
@@ -13,12 +14,101 @@ window.dataStore = {
     { type: 'lerner', name: "MERRIAM-WEBSTER'S LEARNER'S DICTIONARY" },
   ],
   currentDictionary: 'collegiate',
-  currentText: '',
+  currentInputtedText: '',
+  currentTranslation: 'There will be Your translation here...',
+  currentActiveText: 'There will be Your clickable original text here...',
+  currentDictionaryCard: `<div>
+                            <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
+                          </div>`,
+  startDictionaryCard: `<div>
+                            <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
+                          </div>`,
 };
 
-window.getTranslation = getTranslation;
-window.createActiveText = createActiveText;
-window.getWordInformation = getWordInformation;
+window.getTranslation = str => {
+  const parseDataFromTranslationResponse = data => {
+    return data[0][0][0]
+      .replace(/\s*<\s*>/g, '.')
+      .replace(/\s*<\s*1\s*>/g, '!')
+      .replace(/\s*<\s*3\s*>/g, '<br>')
+      .replace(/\s*<\s*2\s*>/g, '?');
+  };
+
+  if (translationResponses[str]) {
+    return parseDataFromTranslationResponse(translationResponses[str]);
+  } else {
+    return 'Я переведу тебе это в своей следующей версии.';
+  }
+};
+
+window.createActiveText = str => {
+  let html = `<div id="activeInputContent" class="${styles.activeTextBlock}">`;
+  str
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .split(' ')
+    .forEach(word => {
+      html += `<a href='#'
+                  class="${styles.activeTextBlock__word}"
+                  onclick="window.dataStore.currentDictionaryCard=window.getWordInformation('${word}'); window.renderApp()">${word}</a> `;
+    });
+  html += '</div>';
+  return html;
+};
+
+window.getWordInformation = word => {
+  const parseDataFromWordInformationResponse = wordInformationCollegiateResponse => {
+    const clearText = str => {
+      return str
+        .replace(/({bc})/g, ':')
+        .replace(/a_link|/g, '')
+        .replace(/sx|/g, '')
+        .replace(/{wi}/g, '')
+        .replace(/{\/wi}/g, '')
+        .replace(/[{}|]/g, '');
+    };
+
+    const createDefList = () => {
+      let html = '';
+      wordInformationCollegiateResponse['def']['0']['sseq'].forEach(definitionGroup => {
+        definitionGroup.forEach(definition => {
+          const definitionNumber = definition[1]['sn'];
+          const definitionContent = definition[1]['dt'][0][1];
+          const definitionExample =
+            definition[1]['dt'].length > 1 ? definition[1]['dt'][1][1][0]['t'] : 'no example';
+          html += `<p class="${styles.wordCard__defListItem}">
+        <b class="${styles.wordCard__defListNum}">${definitionNumber}</b>
+         ${clearText(definitionContent)}</br>
+         <i class="${styles.wordCard__defExample}">// ${clearText(definitionExample)}</i>
+         </p><hr>`;
+        });
+      });
+      return html;
+    };
+
+    const currentWord = wordInformationCollegiateResponse['meta']['id'];
+    const wordGrammaticalFunction = wordInformationCollegiateResponse['fl'];
+    const wordSyllables = wordInformationCollegiateResponse['hwi']['hw'];
+    const wordTranscription = wordInformationCollegiateResponse['hwi']['prs'][0]['mw'];
+
+    return `<div class="${styles.wordCard}">
+  <h3 class="${styles.wordCard__title}">${currentWord} <i class="${
+      styles.wordCard__grammatical
+    }">${wordGrammaticalFunction}</i></h3>
+  <p class="${styles.wordCard__headword}">
+  ${wordSyllables.replace(/\*/g, '·​')}
+  <span class="${styles.wordCard__verticalDivider}">|</span>\\ ${wordTranscription} \\ </p>
+  <h4 class="${styles.wordCard__defTitle}">Definition of <i>'${currentWord}'</i></h4>
+  <div>${createDefList()}</div>
+  </div>`;
+  };
+  const punctuationLessWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, '');
+  if (wordInformationCollegiateResponse['meta']['id'] === punctuationLessWord) {
+    return parseDataFromWordInformationResponse(wordInformationCollegiateResponse);
+  } else {
+    return `<div class="${styles.wordCard}">We do not have any information about word "${punctuationLessWord}" yet...</div>`;
+  }
+};
 
 const header = () => {
   return `<header class="${styles.header}">
@@ -27,44 +117,45 @@ const header = () => {
     </header>`;
 };
 
-const inputTextBlock = () => {
+const inputBlock = () => {
   return `<div class="${styles.appRoot__item}">
   <textarea
   id="input"
-    class="${styles.inputTextBlock__textarea}"
+    class="${styles.inputBlock__textarea}"
     rows="10"
     cols="50"
     placeholder="Write or paste your text here.
-In this version you can work with word 'voluminous'. Have a productive work!"
-  ></textarea>
-  <button
-  onclick="window.dataStore.currentText = document.querySelector('#input').value;
-  window.renderApp();
-  document.querySelector('#input').value = window.dataStore.currentText;
-  document.querySelector('#output').innerHTML=window.getTranslation(window.dataStore.currentText);
-  document.querySelector('#activeInput').innerHTML=window.createActiveText(window.dataStore.currentText)"
+In this version you can work with word 'voluminous'.
+Have a productive work!">${window.dataStore.currentInputtedText}</textarea>
+  <button onclick="window.dataStore.currentInputtedText = document.querySelector('#input').value;
+                  window.dataStore.currentActiveText = window.createActiveText(window.dataStore.currentInputtedText);
+                  window.dataStore.currentTranslation = window.getTranslation(window.dataStore.currentInputtedText);
+                  window.renderApp()"
   >Translate</button>
   <button
-  onclick="window.dataStore.currentText=''; window.renderApp()"
-  >Clear</button>
+  onclick="window.dataStore.currentInputtedText='';
+          window.dataStore.currentActiveText='There will be Your clickable original text here...';
+          window.dataStore.currentTranslation='There will be Your translation here...';
+          window.dataStore.currentDictionaryCard=window.dataStore.startDictionaryCard ;
+          window.renderApp()">
+          Clear
+  </button>
   </div>`;
 };
-const outputTextBlock = () => {
-  return `<div id="output" class="${styles.appRoot__item}">There will be Your translation here...</div>`;
+
+const translationBlock = () => {
+  return `<div id="output" class="${styles.appRoot__item}">${window.dataStore.currentTranslation}</div>`;
 };
+
 const activeTextBlock = () => {
   return `<div class="${styles.appRoot__item}">
-    <div id="activeInput" class="${styles.activeTextBlock}">
-    There will be Your clickable original text here...
-    </div>
+    ${window.dataStore.currentActiveText}
   </div>`;
 };
 const dictionaryCardBlock = () => {
-  return `<div id="dictionaryCardOutput" class="${styles.appRoot__item} ${styles.dictionaryCardBlock}">
-  <div>
-    <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
-  </div>
-  </div>`;
+  return `<div id="dictionaryCardBlock" class="${styles.appRoot__item} ${styles.dictionaryCardBlock}">
+            ${window.dataStore.currentDictionaryCard}
+          </div>`;
 };
 
 const dictionarySwitch = currentDictionary => {
@@ -95,9 +186,9 @@ const footer = () => {
 const app = () => {
   return `
   ${header()}
-  ${inputTextBlock()}
+  ${inputBlock()}
   <br/>
-  ${outputTextBlock()}
+  ${translationBlock()}
   <br/>
   ${activeTextBlock()}
   <br/>
