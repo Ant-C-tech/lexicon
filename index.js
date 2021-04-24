@@ -5,6 +5,7 @@ import { createActiveText } from './utils.js';
 import { getWordInformation } from './utils.js';
 import styles from './styles.css';
 import wmCover from './img/mw-cover.jpg';
+import logo from './img/logo.svg';
 
 window.dataStore = {
   dictionarySet: [
@@ -18,6 +19,13 @@ window.dataStore = {
 window.getTranslation = getTranslation;
 window.createActiveText = createActiveText;
 window.getWordInformation = getWordInformation;
+
+const header = () => {
+  return `<header class="${styles.header}">
+      <a href="#"><img class="${styles.header__logo}" src="${logo}" alt="logo" /></a>
+      <h1 class="${styles.header__title}">Lexicon</h1>
+    </header>`;
+};
 
 const inputTextBlock = () => {
   return `<div class="${styles.appRoot__item}">
@@ -77,6 +85,7 @@ const dictionaryCardBlock = () => {
 
 const app = () => {
   return `
+  ${header()}
   ${inputTextBlock()}
   <br/>
   ${outputTextBlock()}
