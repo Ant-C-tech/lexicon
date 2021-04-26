@@ -61,8 +61,19 @@ window.getTranslation = str => {
   }
 };
 
+window.setCurrentDictionaryCard = event => {
+  if (event.target !== null) {
+    window.dataStore.currentDictionaryCard = window.getWordInformation(
+      event.target.getAttribute('data-value'),
+    );
+  }
+};
+
 window.createActiveText = str => {
-  let html = `<div id="activeInputContent" class="${styles.activeTextBlock}">`;
+  let html = `<div id="activeInputContent"
+                   class="${styles.activeTextBlock}"
+                   onclick="window.setCurrentDictionaryCard(event);
+                   window.renderApp()">`;
   str
     .replace(/\s{2,}/g, ' ')
     .trim()
@@ -70,7 +81,7 @@ window.createActiveText = str => {
     .forEach(word => {
       html += `<a href='#'
                   class="${styles.activeTextBlock__word}"
-                  onclick="window.dataStore.currentDictionaryCard=window.getWordInformation('${word}'); window.renderApp()">${word}</a> `;
+                  data-value="${word}">${word}</a> `;
     });
   html += '</div>';
   return html;
