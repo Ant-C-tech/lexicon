@@ -184,7 +184,7 @@ const footer = () => {
 };
 
 const app = () => {
-  return `
+  return `<div class="${styles.appRootContainer}">
   ${header()}
   ${inputBlock()}
   <br/>
@@ -194,7 +194,7 @@ const app = () => {
   <br/>
   ${dictionaryCardBlock()}
   ${footer()}
-  `;
+  </div>`;
 };
 
 const ROOT = document.querySelector('#app-root');
