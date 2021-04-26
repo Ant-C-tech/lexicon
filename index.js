@@ -25,6 +25,26 @@ window.dataStore = {
                           </div>`,
 };
 
+window.startApp = () => {
+  const inputValue = document.querySelector('#input').value;
+  if (inputValue !== '') {
+    window.dataStore.currentInputtedText = inputValue;
+    window.dataStore.currentActiveText = window.createActiveText(
+      window.dataStore.currentInputtedText,
+    );
+    window.dataStore.currentTranslation = window.getTranslation(
+      window.dataStore.currentInputtedText,
+    );
+  }
+};
+
+window.clearApp = () => {
+  window.dataStore.currentInputtedText = '';
+  window.dataStore.currentActiveText = 'There will be Your clickable original text here...';
+  window.dataStore.currentTranslation = 'There will be Your translation here...';
+  window.dataStore.currentDictionaryCard = window.dataStore.startDictionaryCard;
+};
+
 window.getTranslation = str => {
   const parseDataFromTranslationResponse = data => {
     return data[0][0][0]
@@ -127,18 +147,10 @@ const inputBlock = () => {
     placeholder="Write or paste your text here.
 In this version you can work with word 'voluminous'.
 Have a productive work!">${window.dataStore.currentInputtedText}</textarea>
-  <button onclick="window.dataStore.currentInputtedText = document.querySelector('#input').value;
-                  window.dataStore.currentActiveText = window.createActiveText(window.dataStore.currentInputtedText);
-                  window.dataStore.currentTranslation = window.getTranslation(window.dataStore.currentInputtedText);
-                  window.renderApp()"
+  <button onclick="window.startApp(); window.renderApp()"
   >Translate</button>
-  <button
-  onclick="window.dataStore.currentInputtedText='';
-          window.dataStore.currentActiveText='There will be Your clickable original text here...';
-          window.dataStore.currentTranslation='There will be Your translation here...';
-          window.dataStore.currentDictionaryCard=window.dataStore.startDictionaryCard ;
-          window.renderApp()">
-          Clear
+  <button onclick="window.clearApp(); window.renderApp()">
+    Clear
   </button>
   </div>`;
 };
