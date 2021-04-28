@@ -62,7 +62,7 @@ window.getTranslation = str => {
 };
 
 window.setCurrentDictionaryCard = event => {
-  if (event.target !== null) {
+  if (event.target.getAttribute('data-value') !== null) {
     window.dataStore.currentDictionaryCard = window.getWordInformation(
       event.target.getAttribute('data-value'),
     );
@@ -89,48 +89,92 @@ window.createActiveText = str => {
 
 window.getWordInformation = word => {
   const parseDataFromWordInformationResponse = wordInformationCollegiateResponse => {
-    const clearText = str => {
-      return str
+    const cleanText = str => {
+      let clearText = str
         .replace(/({bc})/g, ':')
-        .replace(/a_link|/g, '')
-        .replace(/sx|/g, '')
-        .replace(/{wi}/g, '')
-        .replace(/{\/wi}/g, '')
-        .replace(/[{}|]/g, '');
+        .replace(/({wi})/g, '')
+        .replace(/({\/wi})/g, '');
+      const hasLink = /({a_link\|).+?}/.test(clearText);
+      const hasNeedCapitalize = /({sx\|).+?(\|\|})/.test(clearText);
+      //Make text linkLess
+      if (hasLink) {
+        const [linkLessTarget] = clearText.match(/({a_link\|).+?}/);
+        const linkLessRes = linkLessTarget.replace(/({a_link\|)/g, '').replace(/}/g, '');
+        clearText = clearText.replace(/({a_link\|).+?}/, linkLessRes);
+      }
+      //Make text capitalized
+      if (hasNeedCapitalize) {
+        const [needCapitalize] = clearText.match(/({sx\|).+?(\|\|})/);
+        const capitalized = needCapitalize
+          .replace(/({sx\|)/g, '')
+          .replace(/(\|\|})/g, '')
+          .toUpperCase();
+        clearText = clearText.replace(/({sx\|).+?(\|\|})/, capitalized);
+      }
+      if (hasLink || hasNeedCapitalize) {
+        cleanText(clearText);
+      }
+      return clearText;
     };
 
-    const createDefList = () => {
+    const createDefList = definitionGroups => {
+      const definitions = definitionGroups.flat().map(definitionItem => {
+        const [, definition] = definitionItem;
+        return definition;
+      });
       let html = '';
-      wordInformationCollegiateResponse['def']['0']['sseq'].forEach(definitionGroup => {
-        definitionGroup.forEach(definition => {
-          const definitionNumber = definition[1]['sn'];
-          const definitionContent = definition[1]['dt'][0][1];
-          const definitionExample =
-            definition[1]['dt'].length > 1 ? definition[1]['dt'][1][1][0]['t'] : 'no example';
+
+      definitions.forEach(definitionData => {
+        const {
+          sn: definitionNumber,
+          dt: [[, definition], [, [{ t: example }]] = [, [{ t: 'no example' }]]],
+          sdsense: additionData,
+        } = definitionData;
+
+        html += `<p class="${styles.wordCard__defListItem}">
+                  <b class="${styles.wordCard__defListNum}">${definitionNumber}</b>
+                  ${cleanText(definition)}</br>
+                  <i class="${styles.wordCard__defExample}">// ${cleanText(example)}</i>
+                </p>`;
+
+        if (additionData) {
+          const {
+            dt: [[, additionDefinition], [, [{ t: additionExample }]] = [, [{ t: 'no example' }]]],
+          } = additionData;
           html += `<p class="${styles.wordCard__defListItem}">
-        <b class="${styles.wordCard__defListNum}">${definitionNumber}</b>
-         ${clearText(definitionContent)}</br>
-         <i class="${styles.wordCard__defExample}">// ${clearText(definitionExample)}</i>
-         </p><hr>`;
-        });
+                  also ${cleanText(additionDefinition)}</br>
+                  <i class="${styles.wordCard__defExample}">// ${cleanText(additionExample)}</i>
+                </p>`;
+        }
+
+        html += '<hr>';
       });
       return html;
     };
 
-    const currentWord = wordInformationCollegiateResponse['meta']['id'];
-    const wordGrammaticalFunction = wordInformationCollegiateResponse['fl'];
-    const wordSyllables = wordInformationCollegiateResponse['hwi']['hw'];
-    const wordTranscription = wordInformationCollegiateResponse['hwi']['prs'][0]['mw'];
+    const changeAsteriskToDot = str => {
+      return str.replace(/\*/g, '·​');
+    };
+
+    const {
+      meta: { id: currentWord },
+      hwi: {
+        hw: wordSyllables,
+        prs: [{ mw: wordTranscription }],
+      },
+      fl: wordGrammaticalFunction,
+      def: [{ sseq: definitionGroups }],
+    } = wordInformationCollegiateResponse;
 
     return `<div class="${styles.wordCard}">
   <h3 class="${styles.wordCard__title}">${currentWord} <i class="${
       styles.wordCard__grammatical
     }">${wordGrammaticalFunction}</i></h3>
   <p class="${styles.wordCard__headword}">
-  ${wordSyllables.replace(/\*/g, '·​')}
+  ${changeAsteriskToDot(wordSyllables)}
   <span class="${styles.wordCard__verticalDivider}">|</span>\\ ${wordTranscription} \\ </p>
   <h4 class="${styles.wordCard__defTitle}">Definition of <i>'${currentWord}'</i></h4>
-  <div>${createDefList()}</div>
+  <div>${createDefList(definitionGroups)}</div>
   </div>`;
   };
   const punctuationLessWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, '');
