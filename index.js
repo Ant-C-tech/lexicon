@@ -117,6 +117,10 @@ window.getWordInformation = word => {
       return clearText;
     };
 
+    const changeAsteriskToDot = str => {
+      return str.replace(/\*/g, '·​');
+    };
+
     const createDefList = definitionGroups => {
       const definitions = definitionGroups.flat().map(definitionItem => {
         const [, definition] = definitionItem;
@@ -146,14 +150,21 @@ window.getWordInformation = word => {
                   <i class="${styles.wordCard__defExample}">// ${cleanText(additionExample)}</i>
                 </p>`;
         }
-
-        html += '<hr>';
       });
       return html;
     };
 
-    const changeAsteriskToDot = str => {
-      return str.replace(/\*/g, '·​');
+    const createRelativesList = relatives => {
+      let html = '';
+      relatives.forEach(relativeData => {
+        const { ure: relativeWord, fl: wordGrammaticalFunction } = relativeData;
+        html += `<p class="${styles.wordCard__defListItem}">
+        <b class="${styles.wordCard__defListNum}">${changeAsteriskToDot(
+          relativeWord,
+        )}</b> <i>${wordGrammaticalFunction}</i>
+        </p>`;
+      });
+      return html;
     };
 
     const {
@@ -164,6 +175,7 @@ window.getWordInformation = word => {
       },
       fl: wordGrammaticalFunction,
       def: [{ sseq: definitionGroups }],
+      uros: relatives,
     } = wordInformationCollegiateResponse;
 
     return `<div class="${styles.wordCard}">
@@ -173,8 +185,13 @@ window.getWordInformation = word => {
   <p class="${styles.wordCard__headword}">
   ${changeAsteriskToDot(wordSyllables)}
   <span class="${styles.wordCard__verticalDivider}">|</span>\\ ${wordTranscription} \\ </p>
+  <hr>
   <h4 class="${styles.wordCard__defTitle}">Definition of <i>'${currentWord}'</i></h4>
   <div>${createDefList(definitionGroups)}</div>
+  <hr>
+  <h4 class="${styles.wordCard__defTitle}">Other Words from <i>'${currentWord}'</i> :</h4>
+  <div>${createRelativesList(relatives)}</div>
+  <hr>
   </div>`;
   };
   const punctuationLessWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, '');
