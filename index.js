@@ -16,8 +16,9 @@ window.dataStore = {
   ],
   currentDictionary: "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY",
   currentInputtedText: '',
-  currentTranslation: 'There will be Your translation here...',
-  currentActiveText: 'There will be Your clickable original text here...',
+  currentTranslation: 'There will be translation here...',
+  currentActiveText:
+    "There will be clickable text here to get data from MERRIAM-WEBSTER'S DICTIONARIES...",
   currentWord: undefined,
   currentDictionaryCard: `<div>
                             <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
@@ -306,7 +307,9 @@ const inputBlock = () => {
     rows="10"
     cols="50"
     placeholder="Write or paste your text here.
-In this version you can work with word 'voluminous'.
+In this version You can get data for word 'voluminous' from MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY.
+or
+You can get data for word 'school' from MERRIAM-WEBSTER'S ELEMENTARY DICTIONARY.
 Have a productive work!">${window.dataStore.currentInputtedText}</textarea>
   <button onclick="window.startApp(); window.renderApp()"
   >Translate</button>
