@@ -117,6 +117,7 @@ window.getWordInformation = () => {
       .replace(/({it})/g, '');
     const hasLink = /({a_link\|).+?}/.test(clearText);
     const hasNeedCapitalize = /({sx\|).+?(\|\|})/.test(clearText);
+    const hasReferenceToDefinition = /({ds\|\|).+?(\|\|})/.test(clearText);
     //Make text linkLess
     if (hasLink) {
       const [linkLessTarget] = clearText.match(/({a_link\|).+?}/);
@@ -132,7 +133,16 @@ window.getWordInformation = () => {
         .toUpperCase();
       clearText = clearText.replace(/({sx\|).+?(\|\|})/, capitalized);
     }
-    if (hasLink || hasNeedCapitalize) {
+    // Add reference to definition
+    if (hasReferenceToDefinition) {
+      const [needReference] = clearText.match(/({ds\|\|).+?(\|\|})/);
+      const numberOfReference = needReference.replace(/({ds\|\|)/g, '').replace(/(\|\|})/g, '');
+      clearText = clearText.replace(
+        /({ds\|\|).+?(\|\|})/,
+        `, in the meaning defined at sense ${numberOfReference}`,
+      );
+    }
+    if (hasLink || hasNeedCapitalize || hasReferenceToDefinition) {
       cleanText(clearText);
     }
     return clearText;
@@ -200,6 +210,15 @@ window.getWordInformation = () => {
       return html;
     };
 
+    const createHistoryList = historyElements => {
+      let html = '';
+      historyElements.forEach(historyData => {
+        const [, history] = historyData;
+        html += `<p class="${styles.wordCard__defListItem}">${cleanText(history)}</p>`;
+      });
+      return html;
+    };
+
     const {
       meta: { id: currentWord },
       hwi: {
@@ -210,26 +229,49 @@ window.getWordInformation = () => {
       def: [{ sseq: definitionGroups }],
       uros: relatives,
       suppl: { examples },
+      et: historyElements,
+      date,
     } = response;
 
     return `<div class="${styles.wordCard}">
-  <h3 class="${styles.wordCard__title}">${currentWord} <i class="${
-      styles.wordCard__grammatical
-    }">${wordGrammaticalFunction}</i></h3>
-  <p class="${styles.wordCard__headword}">
-  ${changeAsteriskToDot(wordSyllables)}
-  <span class="${styles.wordCard__verticalDivider}">|</span>\\ ${wordTranscription} \\ </p>
-  <hr>
-  <h4 class="${styles.wordCard__defTitle}">Definition of <i>'${currentWord}'</i></h4>
-  <div>${createDefList(definitionGroups)}</div>
-  <hr>
-  <h4 class="${styles.wordCard__defTitle}">Other Words from <i>'${currentWord}'</i> :</h4>
-  <div>${createRelativesList(relatives)}</div>
-  <hr>
-  <h4 class="${styles.wordCard__defTitle}">Examples of <i>'${currentWord}'</i> in a Sentence :</h4>
-  <div>${createExamplesList(examples)}</div>
-  <hr>
-  </div>`;
+              <h3 class="${styles.wordCard__title}">
+                ${currentWord}
+                <i class="${styles.wordCard__grammatical}">
+                ${wordGrammaticalFunction}
+                </i>
+              </h3>
+              <p class="${styles.wordCard__headword}">
+                ${changeAsteriskToDot(wordSyllables)}
+                <span class="${styles.wordCard__verticalDivider}">|</span>
+                \\ ${wordTranscription} \\
+              </p>
+              <hr>
+              <h4 class="${styles.wordCard__defTitle}">
+                Definition of <i>'${currentWord}'</i> :
+              </h4>
+              <div>${createDefList(definitionGroups)}</div>
+              <hr>
+              <h4 class="${styles.wordCard__defTitle}">
+                Other Words from
+                <i>'${currentWord}'</i> :
+              </h4>
+              <div>${createRelativesList(relatives)}</div>
+              <hr>
+              <h4 class="${styles.wordCard__defTitle}">
+                Examples of <i>'${currentWord}'</i> in a Sentence :
+              </h4>
+              <div>${createExamplesList(examples)}</div>
+              <hr>
+              <div>
+                <p><b class="${styles.wordCard__defListNum}">First Known Use: </b></p>
+                <p>${cleanText(date)}.</p>
+              </div>
+              <div>
+                <p><b class="${styles.wordCard__defListNum}">Etymology: </b></p>
+                <p>${createHistoryList(historyElements)}</p>
+              </div>
+              <hr>
+              </div>`;
   };
 
   const parseDataFromElementaryResponse = response => {
