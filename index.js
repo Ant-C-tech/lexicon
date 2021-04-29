@@ -2,7 +2,7 @@
 
 import { translationResponses } from './translation-responses.js';
 import { collegiateResponse } from './collegiate-responses.js';
-import { elementaryResponse } from './elementary-responses.js';
+import { thesaurusResponse } from './thesaurus-responses.js';
 
 import styles from './styles.css';
 
@@ -12,7 +12,7 @@ import logo from './img/logo.svg';
 window.dataStore = {
   dictionarySet: [
     "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY",
-    "MERRIAM-WEBSTER'S ELEMENTARY DICTIONARY",
+    "MERRIAM-WEBSTER'S COLLEGIATE THESAURUS",
   ],
   currentDictionary: "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY",
   currentInputtedText: '',
@@ -274,7 +274,7 @@ window.getWordInformation = () => {
               </div>`;
   };
 
-  const parseDataFromElementaryResponse = response => {
+  const parseDataFromThesaurusResponse = response => {
     const createDefList = definitionGroups => {
       const definitions = definitionGroups.flat().map(definitionItem => {
         const [, definition] = definitionItem;
@@ -284,15 +284,17 @@ window.getWordInformation = () => {
 
       definitions.forEach(definitionData => {
         const {
-          sn: definitionNumber,
-          dt: [[, definition], [, [{ t: example }]] = [, [{ t: '' }]]],
+          sn: definitionNumber = '',
+          dt: [[, definition], [, [{ t: example }]] = [, [{ t: 'no example' }]]],
           sdsense: additionData,
+          syn_list: [synonyms],
+          rel_list: relatedWordGroups,
         } = definitionData;
 
         html += `<p class="${styles.wordCard__defListItem}">
-                  <b class="${styles.wordCard__defListNum}">${definitionNumber}</b>
+                  <b>${definitionNumber}</b>
                   ${cleanText(definition)}</br>
-                  <i class="${styles.wordCard__defExample}">${cleanText(example)}</i>
+                  <i class="${styles.wordCard__defExample}">// ${cleanText(example)}</i>
                 </p>`;
 
         if (additionData) {
@@ -304,29 +306,53 @@ window.getWordInformation = () => {
                   <i class="${styles.wordCard__defExample}">// ${cleanText(additionExample)}</i>
                 </p>`;
         }
+
+        html += `<hr>
+                <h4>Synonyms:</h4>
+                <ul>`;
+        synonyms.forEach(synonymData => {
+          const { wd: synonym } = synonymData;
+          html += `<li>${synonym}</li>`;
+        });
+        html += `</ul>`;
+
+        html += `<hr>
+                <h4>Related words:</h4>
+                <ul>`;
+        relatedWordGroups.forEach(relatedWordGroup => {
+          html += `<ul>`;
+          relatedWordGroup.forEach(relatedWordData => {
+            const { wd: relatedWord } = relatedWordData;
+            html += `<li>${relatedWord}</li>`;
+          });
+          html += `</ul>`;
+        });
+        html += `</ul>`;
       });
       return html;
     };
 
     const {
-      hwi: {
-        hw: currentWord,
-        prs: [{ mw: wordTranscription }],
-      },
+      meta: { id: currentWord },
       fl: wordGrammaticalFunction,
       def: [{ sseq: definitionGroups }],
     } = response;
 
     return `<div class="${styles.wordCard}">
-  <h3 class="${styles.wordCard__title}">${currentWord} <i class="${
-      styles.wordCard__grammatical
-    }">${wordGrammaticalFunction}</i></h3>
-  <p class="${styles.wordCard__headword}">\\ ${wordTranscription} \\ </p>
-  <hr>
-  <h4 class="${styles.wordCard__defTitle}">Definition of <i>'${currentWord}'</i></h4>
-  <div>${createDefList(definitionGroups)}</div>
-  <hr>
-  </div>`;
+              <h3 class="${styles.wordCard__title}">
+                ${currentWord}
+                <i class="${styles.wordCard__grammatical}">
+                ${wordGrammaticalFunction}
+                </i>
+              </h3>
+              <hr>
+              <h4 class="${styles.wordCard__defTitle}">
+                Definition of <i>'${currentWord}'</i> :
+              </h4>
+              <div>${createDefList(definitionGroups)}</div>
+              <hr>
+
+              </div>`;
   };
 
   const punctuationLessWord = window.dataStore.currentWord.replace(
@@ -340,9 +366,9 @@ window.getWordInformation = () => {
     } else {
       return `<div class="${styles.wordCard}">We do not have any information about word "${punctuationLessWord}" yet...</div>`;
     }
-  } else if (window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S ELEMENTARY DICTIONARY") {
-    if (elementaryResponse['hwi']['hw'] === punctuationLessWord) {
-      return parseDataFromElementaryResponse(elementaryResponse);
+  } else if (window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE THESAURUS") {
+    if (thesaurusResponse['meta']['id'] === punctuationLessWord) {
+      return parseDataFromThesaurusResponse(thesaurusResponse);
     } else {
       return `<div class="${styles.wordCard}">We do not have any information about word "${punctuationLessWord}" yet...</div>`;
     }
@@ -366,7 +392,7 @@ const inputBlock = () => {
     placeholder="Write or paste your text here.
 In this version You can get data for word 'voluminous' from MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY.
 or
-You can get data for word 'school' from MERRIAM-WEBSTER'S ELEMENTARY DICTIONARY.
+You can get data for word 'umpire' from MERRIAM-WEBSTER'S COLLEGIATE THESAURUS.
 Have a productive work!">${window.dataStore.currentInputtedText}</textarea>
   <button onclick="window.startApp(); window.renderApp()"
   >Translate</button>

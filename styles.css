@@ -12,6 +12,14 @@ hr {
   margin: 20px 20 20px 0;
 }
 
+ul {
+  margin: 10px 0;
+}
+
+li {
+  margin-left: 20px;
+}
+
 .appRoot {
   width: 100vw;
   height: 100vh;
