@@ -1,5 +1,5 @@
 'use strict';
-export const wordInformationCollegiateResponse = {
+export const collegiateResponse = {
   meta: {
     id: 'voluminous',
     uuid: '0d01b967-971f-4ec5-8fe0-10513d29c39b',
