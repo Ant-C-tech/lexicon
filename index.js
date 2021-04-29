@@ -74,7 +74,7 @@ window.getTranslation = str => {
   if (translationResponses[str]) {
     return parseDataFromTranslationResponse(translationResponses[str]);
   } else {
-    return 'Я переведу тебе это в своей следующей версии.';
+    return 'Я переведу тебе этот текст в своей следующей версии.';
   }
 };
 
@@ -189,6 +189,17 @@ window.getWordInformation = () => {
       return html;
     };
 
+    const createExamplesList = examples => {
+      let html = '';
+      examples.forEach(exampleData => {
+        const { t: example } = exampleData;
+        html += `<p class="${styles.wordCard__defListItem}">
+                  <i class="${styles.wordCard__exampleInSentences}">// ${cleanText(example)}</i>
+                </p>`;
+      });
+      return html;
+    };
+
     const {
       meta: { id: currentWord },
       hwi: {
@@ -198,6 +209,7 @@ window.getWordInformation = () => {
       fl: wordGrammaticalFunction,
       def: [{ sseq: definitionGroups }],
       uros: relatives,
+      suppl: { examples },
     } = response;
 
     return `<div class="${styles.wordCard}">
@@ -213,6 +225,9 @@ window.getWordInformation = () => {
   <hr>
   <h4 class="${styles.wordCard__defTitle}">Other Words from <i>'${currentWord}'</i> :</h4>
   <div>${createRelativesList(relatives)}</div>
+  <hr>
+  <h4 class="${styles.wordCard__defTitle}">Examples of <i>'${currentWord}'</i> in a Sentence :</h4>
+  <div>${createExamplesList(examples)}</div>
   <hr>
   </div>`;
   };
@@ -335,10 +350,11 @@ const dictionaryCardBlock = () => {
           </div>`;
 };
 
-const dictionarySwitch = () => {
-  return window.dataStore.dictionarySet
-    .map(dictionary => {
-      return `<label>
+const footer = () => {
+  const dictionarySwitch = () => {
+    return window.dataStore.dictionarySet
+      .map(dictionary => {
+        return `<label>
                 <input
                 class="${styles.footer__radioInput}"
                 type="radio"
@@ -349,11 +365,9 @@ const dictionarySwitch = () => {
                 />
                 <span class="${styles.footer__dictionarySwitchButton}">${dictionary}</span>
               </label>`;
-    })
-    .join('');
-};
-
-const footer = () => {
+      })
+      .join('');
+  };
   return `<footer class="${styles.footer}">
   ${dictionarySwitch()}
   </footer>`;

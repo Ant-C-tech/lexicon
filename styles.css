@@ -217,6 +217,11 @@ button {
   color: bisque;
 }
 
+.wordCard__exampleInSentences {
+  font-size: 22px;
+  color: bisque;
+}
+
 .footer {
   position: fixed;
   bottom: 0;
