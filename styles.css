@@ -152,7 +152,13 @@ button {
 }
 
 .dictionaryCardBlock__cover {
+  display: block;
   max-height: 350px;
+  margin: 0 auto;
+}
+
+.dictionaryCardBlock__coverTitle {
+  color: rgb(226, 226, 225);
 }
 
 .wordCard {

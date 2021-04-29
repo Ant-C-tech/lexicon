@@ -5,23 +5,21 @@ import { wordInformationCollegiateResponse } from './word-information-collegiate
 
 import styles from './styles.css';
 
-import wmCover from './img/mw-cover.jpg';
+import wmCover from './img/mw-cover_.svg';
 import logo from './img/logo.svg';
 
 window.dataStore = {
   dictionarySet: [
-    { type: 'collegiate', name: "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY" },
-    { type: 'lerner', name: "MERRIAM-WEBSTER'S LEARNER'S DICTIONARY" },
+    "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY",
+    "MERRIAM-WEBSTER'S LEARNER'S DICTIONARY",
   ],
-  currentDictionary: 'collegiate',
+  currentDictionary: "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY",
   currentInputtedText: '',
   currentTranslation: 'There will be Your translation here...',
   currentActiveText: 'There will be Your clickable original text here...',
   currentDictionaryCard: `<div>
                             <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
-                          </div>`,
-  startDictionaryCard: `<div>
-                            <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
+                            <p class="${styles.dictionaryCardBlock__coverTitle}">MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY</p>
                           </div>`,
 };
 
@@ -38,11 +36,25 @@ window.startApp = () => {
   }
 };
 
-window.clearApp = () => {
+window.resetApp = () => {
   window.dataStore.currentInputtedText = '';
   window.dataStore.currentActiveText = 'There will be Your clickable original text here...';
   window.dataStore.currentTranslation = 'There will be Your translation here...';
-  window.dataStore.currentDictionaryCard = window.dataStore.startDictionaryCard;
+  window.dataStore.currentWord = '';
+  window.dataStore.currentDictionaryCard = `<div>
+                            <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
+                            <p class="${styles.dictionaryCardBlock__coverTitle}">${window.dataStore.currentDictionary}</p>
+                          </div>`;
+};
+
+window.changeCurrentDictionary = value => {
+  window.dataStore.currentDictionary = value;
+  if (window.dataStore.currentWord === undefined) {
+    window.dataStore.currentDictionaryCard = `<div>
+                            <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
+                            <p class="${styles.dictionaryCardBlock__coverTitle}">${window.dataStore.currentDictionary}</p>
+                          </div>`;
+  }
 };
 
 window.getTranslation = str => {
@@ -63,8 +75,9 @@ window.getTranslation = str => {
 
 window.setCurrentDictionaryCard = event => {
   if (event.target.getAttribute('data-value') !== null) {
+    window.dataStore.currentWord = event.target.getAttribute('data-value');
     window.dataStore.currentDictionaryCard = window.getWordInformation(
-      event.target.getAttribute('data-value'),
+      window.dataStore.currentWord,
     );
   }
 };
@@ -221,7 +234,7 @@ In this version you can work with word 'voluminous'.
 Have a productive work!">${window.dataStore.currentInputtedText}</textarea>
   <button onclick="window.startApp(); window.renderApp()"
   >Translate</button>
-  <button onclick="window.clearApp(); window.renderApp()">
+  <button onclick="window.resetApp(); window.renderApp()">
     Clear
   </button>
   </div>`;
@@ -236,6 +249,7 @@ const activeTextBlock = () => {
     ${window.dataStore.currentActiveText}
   </div>`;
 };
+
 const dictionaryCardBlock = () => {
   return `<div id="dictionaryCardBlock" class="${styles.appRoot__item} ${styles.dictionaryCardBlock}">
             ${window.dataStore.currentDictionaryCard}
@@ -249,13 +263,12 @@ const dictionarySwitch = currentDictionary => {
                 <input
                 class="${styles.footer__radioInput}"
                 type="radio"
-                id="${dictionary['type']}"
-                value="${dictionary['type']}"
+                value="${dictionary}"
                 name="dictionary"
-                ${dictionary['type'] === window.dataStore.currentDictionary ? 'checked' : ''}
-                onchange="window.dataStore.currentDictionary = this.value"
+                ${dictionary === window.dataStore.currentDictionary ? 'checked' : ''}
+                onchange="changeCurrentDictionary(this.value); window.renderApp()"
                 />
-                <span class="${styles.footer__dictionarySwitchButton}">${dictionary['name']}</span>
+                <span class="${styles.footer__dictionarySwitchButton}">${dictionary}</span>
               </label>`;
     })
     .join('');
