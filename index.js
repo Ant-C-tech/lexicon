@@ -41,8 +41,9 @@ window.startApp = () => {
 
 window.resetApp = () => {
   window.dataStore.currentInputtedText = '';
-  window.dataStore.currentActiveText = 'There will be Your clickable original text here...';
-  window.dataStore.currentTranslation = 'There will be Your translation here...';
+  window.dataStore.currentActiveText =
+    "There will be clickable text here to get data from MERRIAM-WEBSTER'S DICTIONARIES...";
+  window.dataStore.currentTranslation = 'There will be translation here...';
   window.dataStore.currentWord = undefined;
   window.dataStore.currentDictionaryCard = `<div>
                             <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
