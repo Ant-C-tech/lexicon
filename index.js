@@ -1,8 +1,9 @@
 'use strict';
 
-import { translationResponses } from './translation-responses.js';
 import { collegiateResponse } from './collegiate-responses.js';
 import { thesaurusResponse } from './thesaurus-responses.js';
+import { getGoogleTranslateUrl } from './utils.js';
+import { getMerriamWebsterUrl } from './utils.js';
 
 import styles from './styles.css';
 
@@ -24,18 +25,49 @@ window.dataStore = {
                             <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
                             <p class="${styles.dictionaryCardBlock__coverTitle}">MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY</p>
                           </div>`,
+  isTranslationLoading: false,
+  translationError: null,
+  isWordDataLoading: false,
+  wordDataError: null,
 };
 
 window.startApp = () => {
   const inputValue = document.querySelector('#input').value;
+
+  const getTranslationData = str => {
+    return fetch(getGoogleTranslateUrl(str)).then(response => response.json());
+  };
+
+  const parseTranslationData = data => {
+    let translationResult = '';
+    const [responseContent] = data;
+    responseContent.forEach(responseContentPart => {
+      const [translationPart] = responseContentPart;
+      translationResult += translationPart;
+    });
+    return translationResult;
+  };
+
   if (inputValue !== '') {
+    window.dataStore.isTranslationLoading = true;
+    window.dataStore.translationError = null;
     window.dataStore.currentInputtedText = inputValue;
-    window.dataStore.currentActiveText = window.createActiveText(
-      window.dataStore.currentInputtedText,
-    );
-    window.dataStore.currentTranslation = window.getTranslation(
-      window.dataStore.currentInputtedText,
-    );
+    window.renderApp();
+
+    getTranslationData(window.dataStore.currentInputtedText)
+      .then(data => {
+        window.dataStore.isTranslationLoading = false;
+        window.dataStore.currentTranslation = parseTranslationData(data);
+        window.dataStore.currentActiveText = window.createActiveText(
+          window.dataStore.currentInputtedText,
+        );
+      })
+      .catch(() => {
+        window.dataStore.translationError = 'Some error occurred. Try again!';
+      })
+      .finally(() => {
+        window.renderApp();
+      });
   }
 };
 
@@ -49,91 +81,61 @@ window.resetApp = () => {
                             <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
                             <p class="${styles.dictionaryCardBlock__coverTitle}">${window.dataStore.currentDictionary}</p>
                           </div>`;
+  window.dataStore.isTranslationLoading = false;
+  window.dataStore.translationError = null;
+  window.dataStore.isWordDataLoading = false;
+  window.dataStore.wordDataError = null;
+  window.renderApp();
 };
 
-window.changeCurrentDictionary = value => {
-  window.dataStore.currentDictionary = value;
-  if (window.dataStore.currentWord === undefined) {
-    window.dataStore.currentDictionaryCard = `<div>
-                            <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
-                            <p class="${styles.dictionaryCardBlock__coverTitle}">${window.dataStore.currentDictionary}</p>
-                          </div>`;
-  } else {
-    window.setCurrentDictionaryCard();
-  }
-};
-
-window.getTranslation = str => {
-  const parseDataFromTranslationResponse = data => {
-    return data[0][0][0]
-      .replace(/\s*<\s*>/g, '.')
-      .replace(/\s*<\s*1\s*>/g, '!')
-      .replace(/\s*<\s*3\s*>/g, '<br>')
-      .replace(/\s*<\s*2\s*>/g, '?');
+window.activeTextHandler = event => {
+  const getWordData = (word, dictionary) => {
+    return fetch(getMerriamWebsterUrl(word, dictionary)).then(response => response.json());
   };
 
-  if (translationResponses[str]) {
-    return parseDataFromTranslationResponse(translationResponses[str]);
-  } else {
-    return 'Я переведу тебе этот текст в своей следующей версии.';
-  }
-};
-
-window.setCurrentWord = event => {
-  if (event.target.getAttribute('data-value') !== null) {
-    window.dataStore.currentWord = event.target.getAttribute('data-value');
-  }
-};
-
-window.setCurrentDictionaryCard = () => {
-  window.dataStore.currentDictionaryCard = window.getWordInformation();
-};
-
-window.createActiveText = str => {
-  let html = `<div id="activeInputContent"
-                   class="${styles.activeTextBlock}"
-                   onclick="window.setCurrentWord(event);
-                   window.setCurrentDictionaryCard();
-                   window.renderApp()">`;
-  str
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .split(' ')
-    .forEach(word => {
-      html += `<a href='#'
-                  class="${styles.activeTextBlock__word}"
-                  data-value="${word}">${word}</a> `;
-    });
-  html += '</div>';
-  return html;
-};
-
-window.getWordInformation = () => {
   const cleanText = str => {
     let clearText = str
       .replace(/({bc})/g, ': ')
       .replace(/({wi})/g, '')
       .replace(/({\/wi})/g, '')
       .replace(/({\/it})/g, '')
-      .replace(/({it})/g, '');
-    const hasLink = /({a_link\|).+?}/.test(clearText);
-    const hasNeedCapitalize = /({sx\|).+?(\|\|})/.test(clearText);
+      .replace(/({it})/g, '')
+      .replace(/({dx})/g, '')
+      .replace(/({\/dx})/g, '')
+      .replace(/({sc})/g, '')
+      .replace(/({\/sc})/g, '')
+      .replace(/({dx_def}).+?({\/dx_def})/g, '')
+      .replace(/({dx_ety}).+?({\/dx_ety})/g, '')
+      .replace(/({ds).+?(\|})/g, '')
+      .replace(/({dxt).+?(})/g, '')
+      .replace(/({ma}).+?({\/ma})/g, '');
+
+    const hasLink = /({\w+_link\|).+?}/.test(clearText);
+    const hasNeedCapitalize = /({sx\|).+?(\|.{0,5}})/.test(clearText);
     const hasReferenceToDefinition = /({ds\|\|).+?(\|\|})/.test(clearText);
+    const hasCrossReference = /({dxt\|).+?(\|\|})/.test(clearText);
+
     //Make text linkLess
     if (hasLink) {
-      const [linkLessTarget] = clearText.match(/({a_link\|).+?}/);
-      const linkLessRes = linkLessTarget.replace(/({a_link\|)/g, '').replace(/}/g, '');
-      clearText = clearText.replace(/({a_link\|).+?}/, linkLessRes);
+      const [linkLessTarget] = clearText.match(/({\w+_link\|).+?}/);
+      const linkLessRes = linkLessTarget
+        .replace(/({\w+_link\|)/g, '')
+        .replace(/}/g, '')
+        .split('|')[0];
+      clearText = clearText.replace(/({\w+_link\|).+?}/, linkLessRes);
     }
+
     //Make text capitalized
     if (hasNeedCapitalize) {
-      const [needCapitalize] = clearText.match(/({sx\|).+?(\|\|})/);
+      const [needCapitalize] = clearText.match(/({sx\|).+?(\|.{0,5}})/);
       const capitalized = needCapitalize
         .replace(/({sx\|)/g, '')
-        .replace(/(\|\|})/g, '')
+        .replace(/(\|.{0,5}})/g, '')
+        .split('|')[0]
         .toUpperCase();
-      clearText = clearText.replace(/({sx\|).+?(\|\|})/, capitalized);
+      clearText = clearText.replace(/({sx\|).+?(\|.{0,5}})/, capitalized);
     }
+
     // Add reference to definition
     if (hasReferenceToDefinition) {
       const [needReference] = clearText.match(/({ds\|\|).+?(\|\|})/);
@@ -143,9 +145,20 @@ window.getWordInformation = () => {
         `, in the meaning defined at sense ${numberOfReference}`,
       );
     }
-    if (hasLink || hasNeedCapitalize || hasReferenceToDefinition) {
-      cleanText(clearText);
+
+    //Remove cross reference
+    if (hasCrossReference) {
+      const [needRemoveCrossReference] = clearText.match(/({dxt\|).+?(\|\|})/);
+      const withoutCrossReference = needRemoveCrossReference
+        .replace(/({dxt\|)/g, '')
+        .replace(/(\|\|})/g, '');
+      clearText = clearText.replace(/({dxt\|).+?(\|\|})/, withoutCrossReference);
     }
+
+    if (hasLink || hasNeedCapitalize || hasReferenceToDefinition || hasCrossReference) {
+      clearText = cleanText(clearText);
+    }
+
     return clearText;
   };
 
@@ -159,31 +172,52 @@ window.getWordInformation = () => {
         const [, definition] = definitionItem;
         return definition;
       });
-      let html = '';
+
+      let html = `<p class="${styles.wordCard__defListItem}">`;
 
       definitions.forEach(definitionData => {
-        const {
-          sn: definitionNumber,
-          dt: [[, definition], [, [{ t: example }]] = [, [{ t: 'no example' }]]],
-          sdsense: additionData,
-        } = definitionData;
+        if (definitionData['sn']) {
+          const definitionNumber = definitionData['sn'];
+          html += `<b class="${styles.wordCard__defListNum}">${definitionNumber}</b>`;
+        }
 
-        html += `<p class="${styles.wordCard__defListItem}">
-                  <b class="${styles.wordCard__defListNum}">${definitionNumber}</b>
-                  ${cleanText(definition)}</br>
-                  <i class="${styles.wordCard__defExample}">// ${cleanText(example)}</i>
-                </p>`;
+        if (definitionData['dt']) {
+          let definition = '';
 
-        if (additionData) {
-          const {
-            dt: [[, additionDefinition], [, [{ t: additionExample }]] = [, [{ t: 'no example' }]]],
-          } = additionData;
-          html += `<p class="${styles.wordCard__defListItem}">
-                  also ${cleanText(additionDefinition)}</br>
-                  <i class="${styles.wordCard__defExample}">// ${cleanText(additionExample)}</i>
-                </p>`;
+          definitionData['dt'].forEach(elem => {
+            definition = '';
+            if (elem[0] === 'text') {
+              definition += elem[1];
+            }
+            if (elem[0] === 'uns') {
+              definition += `<span class="${styles.wordCard__defExample}">Note:</span> ${elem[1][0][0][1]}`;
+            }
+            if (definition.length !== 0) {
+              html += `${cleanText(definition)}</br>`;
+            }
+          });
+
+          let example = '';
+          definitionData['dt'].forEach(elem => {
+            example = '';
+            if (elem[0] === 'vis') {
+              const [{ t: exampleContent }] = elem[1];
+              example = exampleContent;
+            }
+            if (elem[0] === 'uns') {
+              elem[1].forEach(item => {
+                if (item[0] === 'vis') {
+                  example += `${item[0]}`;
+                }
+              });
+            }
+            if (example.length !== 0) {
+              html += `<i class="${styles.wordCard__defExample}">// ${cleanText(example)}</i></br>`;
+            }
+          });
         }
       });
+      html += '</p>';
       return html;
     };
 
@@ -200,17 +234,6 @@ window.getWordInformation = () => {
       return html;
     };
 
-    const createExamplesList = examples => {
-      let html = '';
-      examples.forEach(exampleData => {
-        const { t: example } = exampleData;
-        html += `<p class="${styles.wordCard__defListItem}">
-                  <i class="${styles.wordCard__exampleInSentences}">// ${cleanText(example)}</i>
-                </p>`;
-      });
-      return html;
-    };
-
     const createHistoryList = historyElements => {
       let html = '';
       historyElements.forEach(historyData => {
@@ -220,59 +243,88 @@ window.getWordInformation = () => {
       return html;
     };
 
-    const {
-      meta: { id: currentWord },
-      hwi: {
-        hw: wordSyllables,
-        prs: [{ mw: wordTranscription }],
-      },
-      fl: wordGrammaticalFunction,
-      def: [{ sseq: definitionGroups }],
-      uros: relatives,
-      suppl: { examples },
-      et: historyElements,
-      date,
-    } = response;
+    let result = `<div class="${styles.wordCard}">`;
 
-    return `<div class="${styles.wordCard}">
-              <h3 class="${styles.wordCard__title}">
-                ${currentWord}
-                <i class="${styles.wordCard__grammatical}">
-                ${wordGrammaticalFunction}
-                </i>
-              </h3>
-              <p class="${styles.wordCard__headword}">
-                ${changeAsteriskToDot(wordSyllables)}
-                <span class="${styles.wordCard__verticalDivider}">|</span>
-                \\ ${wordTranscription} \\
-              </p>
-              <hr>
-              <h4 class="${styles.wordCard__defTitle}">
-                Definition of <i>'${currentWord}'</i> :
-              </h4>
-              <div>${createDefList(definitionGroups)}</div>
-              <hr>
-              <h4 class="${styles.wordCard__defTitle}">
-                Other Words from
-                <i>'${currentWord}'</i> :
-              </h4>
-              <div>${createRelativesList(relatives)}</div>
-              <hr>
-              <h4 class="${styles.wordCard__defTitle}">
-                Examples of <i>'${currentWord}'</i> in a Sentence :
-              </h4>
-              <div>${createExamplesList(examples)}</div>
-              <hr>
-              <div>
-                <p><b class="${styles.wordCard__defListNum}">First Known Use: </b></p>
-                <p>${cleanText(date)}.</p>
-              </div>
-              <div>
-                <p><b class="${styles.wordCard__defListNum}">Etymology: </b></p>
-                <p>${createHistoryList(historyElements)}</p>
-              </div>
-              <hr>
-              </div>`;
+    response.forEach(dataItem => {
+      const currentWord = dataItem['meta']['id'].split(':')[0];
+      let dataItemCard = '';
+
+      if (dataItem['meta']) {
+        dataItemCard += `<h3 class="${styles.wordCard__title}">
+                          ${currentWord}`;
+      }
+
+      if (dataItem['fl']) {
+        const wordGrammaticalFunction = dataItem['fl'];
+        dataItemCard += `<i class="${styles.wordCard__grammatical}">
+                        ${wordGrammaticalFunction}
+                        </i></h3>`;
+      } else {
+        dataItemCard += '</h3>';
+      }
+
+      if (dataItem['hwi']) {
+        const wordSyllables = dataItem['hwi']['hw'];
+        dataItemCard += `<p class="${styles.wordCard__wordSyllables}">
+                          ${changeAsteriskToDot(wordSyllables)}`;
+        if (dataItem['hwi']['prs']) {
+          const [{ mw: wordTranscription }] = dataItem['hwi']['prs'];
+          dataItemCard += `<span class="${styles.wordCard__verticalDivider}">|</span> \\ ${wordTranscription} \\`;
+        }
+        dataItemCard += '</p><hr>';
+      }
+
+      if (dataItem['meta']['stems']) {
+        const stemsArr = dataItem['meta']['stems'];
+        dataItemCard += ` <div>
+                            <p><b class="${styles.wordCard__defListNum}">Variants: </b></p>`;
+        stemsArr.forEach(variant => {
+          dataItemCard += `<p>${cleanText(variant)}</p>`;
+        });
+        dataItemCard += `</div><hr>`;
+      }
+
+      if (dataItem['def']) {
+        const [{ sseq: definitionGroups }] = dataItem['def'];
+        dataItemCard += `<h4 class="${styles.wordCard__defTitle}">
+                        Definition of <i>'${currentWord}'</i> :
+                        </h4>
+                        <div>${createDefList(definitionGroups)}</div>
+                        <hr>`;
+      }
+
+      if (dataItem['uros']) {
+        const relativesArr = dataItem['uros'];
+        dataItemCard += `<h4 class="${styles.wordCard__defTitle}">
+                        Other Words from
+                        <i>'${currentWord}'</i> :
+                        </h4>
+                        <div>${createRelativesList(relativesArr)}</div>
+                        <hr>`;
+      }
+
+      if (dataItem['date']) {
+        const mentioningDate = dataItem['date'];
+        dataItemCard += `<div>
+                        <p><b class="${styles.wordCard__defListNum}">First Known Use: </b></p>
+                        <p>${cleanText(mentioningDate)}.</p>
+                        </div>`;
+      }
+
+      if (dataItem['et']) {
+        const wordHistory = dataItem['et'];
+        dataItemCard += ` <div>
+                            <p><b class="${styles.wordCard__defListNum}">Etymology: </b></p>
+                            <p>${createHistoryList(wordHistory)}</p>
+                          </div>
+                          <hr>`;
+      }
+      dataItemCard += '<hr>';
+      result += dataItemCard;
+    });
+
+    result += '</div>';
+    return result;
   };
 
   const parseDataFromThesaurusResponse = response => {
@@ -333,6 +385,8 @@ window.getWordInformation = () => {
       return html;
     };
 
+    // console.log(response);
+
     const {
       meta: { id: currentWord },
       fl: wordGrammaticalFunction,
@@ -356,24 +410,72 @@ window.getWordInformation = () => {
               </div>`;
   };
 
-  const punctuationLessWord = window.dataStore.currentWord.replace(
-    /[.,\/#!$%\^&\*;:{}=\-_`~()?]/g,
-    '',
-  );
+  window.dataStore.isWordDataLoading = true;
+  window.dataStore.wordDataError = null;
 
-  if (window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY") {
-    if (collegiateResponse['meta']['id'] === punctuationLessWord) {
-      return parseDataFromCollegiateResponse(collegiateResponse);
-    } else {
-      return `<div class="${styles.wordCard}">We do not have any information about word "${punctuationLessWord}" yet...</div>`;
-    }
-  } else if (window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE THESAURUS") {
-    if (thesaurusResponse['meta']['id'] === punctuationLessWord) {
-      return parseDataFromThesaurusResponse(thesaurusResponse);
-    } else {
-      return `<div class="${styles.wordCard}">We do not have any information about word "${punctuationLessWord}" yet...</div>`;
-    }
+  if (
+    event.target.getAttribute('data-value') !== null &&
+    event.target.getAttribute('data-value') !== undefined
+  ) {
+    window.dataStore.currentWord = event.target.getAttribute('data-value');
+    window.renderApp();
+
+    getWordData(window.dataStore.currentWord, window.dataStore.currentDictionary)
+      .then(data => {
+        // console.log(data);
+        window.dataStore.isWordDataLoading = false;
+
+        if (window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY") {
+          window.dataStore.currentDictionaryCard = parseDataFromCollegiateResponse(data);
+        } else if (
+          window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE THESAURUS"
+        ) {
+          window.dataStore.currentDictionaryCard = parseDataFromThesaurusResponse(data);
+        }
+      })
+      .catch(() => {
+        window.dataStore.wordDataError = 'Some error occurred. Try again!';
+      })
+      .finally(() => {
+        window.renderApp();
+      });
   }
+};
+
+window.changeCurrentDictionary = value => {
+  window.dataStore.currentDictionary = value;
+  if (window.dataStore.currentWord === undefined) {
+    window.dataStore.currentDictionaryCard = `<div>
+                            <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
+                            <p class="${styles.dictionaryCardBlock__coverTitle}">${window.dataStore.currentDictionary}</p>
+                          </div>`;
+  } else {
+    window.setCurrentDictionaryCard();
+  }
+};
+
+window.setCurrentDictionaryCard = () => {
+  window.dataStore.currentDictionaryCard = getWordData(
+    window.dataStore.currentWord,
+    window.dataStore.currentDictionary,
+  );
+};
+
+window.createActiveText = str => {
+  let html = `<div id="activeInputContent"
+                   class="${styles.activeTextBlock}"
+                   onclick="window.activeTextHandler(event)">`;
+  str
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .split(' ')
+    .forEach(word => {
+      html += `<a href='#'
+                  class="${styles.activeTextBlock__word}"
+                  data-value="${word}">${word}</a> `;
+    });
+  html += '</div>';
+  return html;
 };
 
 const header = () => {
@@ -390,33 +492,13 @@ const inputBlock = () => {
     class="${styles.inputBlock__textarea}"
     rows="10"
     cols="50"
-    placeholder="Write or paste your text here.
-In this version You can get data for word 'voluminous' from MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY.
-or
-You can get data for word 'umpire' from MERRIAM-WEBSTER'S COLLEGIATE THESAURUS.
-Have a productive work!">${window.dataStore.currentInputtedText}</textarea>
-  <button onclick="window.startApp(); window.renderApp()"
+    placeholder="Write or paste your text here.">${window.dataStore.currentInputtedText}</textarea>
+  <button onclick="window.startApp();"
   >Translate</button>
-  <button onclick="window.resetApp(); window.renderApp()">
+  <button onclick="window.resetApp();">
     Clear
   </button>
   </div>`;
-};
-
-const translationBlock = () => {
-  return `<div id="output" class="${styles.appRoot__item}">${window.dataStore.currentTranslation}</div>`;
-};
-
-const activeTextBlock = () => {
-  return `<div class="${styles.appRoot__item}">
-    ${window.dataStore.currentActiveText}
-  </div>`;
-};
-
-const dictionaryCardBlock = () => {
-  return `<div id="dictionaryCardBlock" class="${styles.appRoot__item} ${styles.dictionaryCardBlock}">
-            ${window.dataStore.currentDictionaryCard}
-          </div>`;
 };
 
 const footer = () => {
@@ -442,16 +524,61 @@ const footer = () => {
   </footer>`;
 };
 
+const textTranslationResults = () => {
+  const translationBlock = content => {
+    return `<div id="output" class="${styles.appRoot__item} ${styles.translationBlock}">
+            <div class="${styles.translationBlock__wrapper}">${content}</div>
+          </div>`;
+  };
+
+  const activeTextBlock = content => {
+    return `<div class="${styles.appRoot__item}">
+    ${content}
+  </div>`;
+  };
+
+  let translationContent = '';
+  let activeTextContent = '';
+
+  if (window.dataStore.translationError !== null) {
+    translationContent = window.dataStore.translationError;
+    activeTextContent = window.dataStore.translationError;
+  } else if (window.dataStore.isTranslationLoading === false) {
+    translationContent = window.dataStore.currentTranslation;
+    activeTextContent = window.dataStore.currentActiveText;
+  } else {
+    translationContent = 'Loading... Please, wait!';
+    activeTextContent = window.dataStore.currentActiveText;
+  }
+  return `${translationBlock(translationContent)}
+          <br/>
+          ${activeTextBlock(activeTextContent)}`;
+};
+
+const wordDataResults = () => {
+  const dictionaryCardBlock = content => {
+    return `<div id="dictionaryCardBlock" class="${styles.appRoot__item} ${styles.dictionaryCardBlock}">${content}</div>`;
+  };
+  let wordDataContent = '';
+
+  if (window.dataStore.wordDataError !== null) {
+    wordDataContent = window.dataStore.wordDataError;
+  } else if (window.dataStore.isTranslationLoading === false) {
+    wordDataContent = window.dataStore.currentDictionaryCard;
+  } else {
+    wordDataContent = 'Loading... Please, wait!';
+  }
+  return `${dictionaryCardBlock(wordDataContent)}`;
+};
+
 const app = () => {
   return `<div class="${styles.appRootContainer}">
   ${header()}
   ${inputBlock()}
   <br/>
-  ${translationBlock()}
+  ${textTranslationResults()}
   <br/>
-  ${activeTextBlock()}
-  <br/>
-  ${dictionaryCardBlock()}
+  ${wordDataResults()}
   ${footer()}
   </div>`;
 };
@@ -463,4 +590,8 @@ window.renderApp = () => {
   ROOT.innerHTML = app();
 };
 
-renderApp();
+window.renderApp();
+
+// getTranslate(
+//   'Function Expression: When a function is assigned *&^%^#%%^$$#!sjd897987) to a variable. The function &*^klj782=++++364&^# can be named, or anonymous. Use the variable name to call a +_==-564 function defined in a function expression.',
+// );
