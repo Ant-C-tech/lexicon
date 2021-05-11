@@ -296,6 +296,10 @@ button {
   color: bisque;
 }
 
+.wordCard__wordGroupItem {
+  margin-right: 10px;
+}
+
 .footer {
   position: fixed;
   bottom: 0;

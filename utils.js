@@ -1,8 +1,19 @@
 'use strict';
 
-export const getGoogleTranslateUrl = str => {
-  const getSymbolLessStr = str => str.replace(/[\/#$%\^&\*{}\_`~()]/g, '');
-  return process.env.REQUEST_TEXT + getSymbolLessStr(str);
+const { Translate } = require('@google-cloud/translate').v2;
+require('dotenv').config();
+
+const translate = new Translate({
+  credentials: {
+    private_key: process.env.KEY_TRANSLATE,
+    client_email: process.env.MAIL_TRANSLATE,
+  },
+});
+
+export const getTranslationData = str => {
+  return new Promise((resolve, reject) => {
+    resolve(translate.translate(str, 'ru'));
+  });
 };
 
 export const getMerriamWebsterUrl = (word, dictionary) => {
