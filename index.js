@@ -1,7 +1,5 @@
 'use strict';
 
-import { collegiateResponse } from './collegiate-responses.js';
-import { thesaurusResponse } from './thesaurus-responses.js';
 import { getGoogleTranslateUrl } from './utils.js';
 import { getMerriamWebsterUrl } from './utils.js';
 
@@ -25,49 +23,23 @@ window.dataStore = {
                             <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
                             <p class="${styles.dictionaryCardBlock__coverTitle}">MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY</p>
                           </div>`,
-  isTranslationLoading: false,
-  translationError: null,
-  isWordDataLoading: false,
-  wordDataError: null,
+  // isTranslationLoading: false,
+  // translationError: null,
+  // isWordDataLoading: false,
+  // wordDataError: null,
 };
 
 window.startApp = () => {
   const inputValue = document.querySelector('#input').value;
 
-  const getTranslationData = str => {
-    return fetch(getGoogleTranslateUrl(str)).then(response => response.json());
-  };
-
-  const parseTranslationData = data => {
-    let translationResult = '';
-    const [responseContent] = data;
-    responseContent.forEach(responseContentPart => {
-      const [translationPart] = responseContentPart;
-      translationResult += translationPart;
-    });
-    return translationResult;
-  };
-
   if (inputValue !== '') {
-    window.dataStore.isTranslationLoading = true;
-    window.dataStore.translationError = null;
     window.dataStore.currentInputtedText = inputValue;
-    window.renderApp();
 
-    getTranslationData(window.dataStore.currentInputtedText)
-      .then(data => {
-        window.dataStore.isTranslationLoading = false;
-        window.dataStore.currentTranslation = parseTranslationData(data);
-        window.dataStore.currentActiveText = window.createActiveText(
-          window.dataStore.currentInputtedText,
-        );
-      })
-      .catch(() => {
-        window.dataStore.translationError = 'Some error occurred. Try again!';
-      })
-      .finally(() => {
-        window.renderApp();
-      });
+    window.dataStore.currentTranslation = 'Loading... Please, wait!';
+    window.dataStore.currentActiveText = 'Loading... Please, wait!';
+
+    // window.textTranslationResults();
+    window.renderApp();
   }
 };
 
@@ -88,7 +60,75 @@ window.resetApp = () => {
   window.renderApp();
 };
 
-window.activeTextHandler = event => {
+window.textTranslationResults = () => {
+  const getTranslationData = str => {
+    return fetch(getGoogleTranslateUrl(str)).then(response => response.json());
+  };
+
+  const parseTranslationData = data => {
+    let translationResult = '';
+    const [responseContent] = data;
+    responseContent.forEach(responseContentPart => {
+      const [translationPart] = responseContentPart;
+      translationResult += translationPart;
+    });
+    return translationResult;
+  };
+
+  const createActiveText = str => {
+    let html = `<div id="activeInputContent"
+                   class="${styles.activeTextBlock}"
+                   onclick="window.activeTextHandler(event)">`;
+    str
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+      .split(' ')
+      .forEach(word => {
+        html += `<a href='#'
+                  class="${styles.activeTextBlock__word}"
+                  data-value="${word}">${word}</a> `;
+      });
+    html += '</div>';
+    return html;
+  };
+
+  // window.renderApp();
+
+  if (window.dataStore.currentInputtedText !== '') {
+    getTranslationData(window.dataStore.currentInputtedText)
+      .then(data => {
+        window.dataStore.isTranslationLoading = false;
+        window.dataStore.currentTranslation = parseTranslationData(data);
+        window.dataStore.currentActiveText = createActiveText(window.dataStore.currentInputtedText);
+      })
+      .catch(() => {
+        window.dataStore.currentTranslation = 'Some error occurred. Try again!';
+        window.dataStore.currentActiveText = 'Some error occurred. Try again!';
+      })
+      .finally(() => {
+        window.renderApp();
+      });
+  }
+
+  // let translationContent = '';
+  // let activeTextContent = '';
+
+  // if (window.dataStore.translationError !== null) {
+  //   translationContent = window.dataStore.translationError;
+  //   activeTextContent = window.dataStore.translationError;
+  // } else if (window.dataStore.isTranslationLoading === false) {
+  //   translationContent = window.dataStore.currentTranslation;
+  //   activeTextContent = window.dataStore.currentActiveText;
+  // } else {
+  //   translationContent = 'Loading... Please, wait!';
+  //   activeTextContent = window.dataStore.currentActiveText;
+  // }
+  // return `${translationBlock(translationContent)}
+  //         <br/>
+  //         ${activeTextBlock(activeTextContent)}`;
+};
+
+window.wordDataResults = () => {
   const getWordData = (word, dictionary) => {
     return fetch(getMerriamWebsterUrl(word, dictionary)).then(response => response.json());
   };
@@ -410,73 +450,59 @@ window.activeTextHandler = event => {
               </div>`;
   };
 
-  window.dataStore.isWordDataLoading = true;
-  window.dataStore.wordDataError = null;
+  // window.renderApp();
 
+  getWordData(window.dataStore.currentWord, window.dataStore.currentDictionary)
+    .then(data => {
+      window.dataStore.isWordDataLoading = false;
+
+      if (window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY") {
+        window.dataStore.currentDictionaryCard = parseDataFromCollegiateResponse(data);
+      } else if (window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE THESAURUS") {
+        window.dataStore.currentDictionaryCard = parseDataFromThesaurusResponse(data);
+      }
+    })
+    .catch(() => {
+      currentDictionaryCard = 'Some error occurred. Try again!';
+    })
+    .finally(() => {
+      window.renderApp();
+    });
+};
+
+window.activeTextHandler = event => {
   if (
     event.target.getAttribute('data-value') !== null &&
     event.target.getAttribute('data-value') !== undefined
   ) {
+    window.dataStore.currentDictionaryCard = 'Loading... Please, wait!';
     window.dataStore.currentWord = event.target.getAttribute('data-value');
+    // window.wordDataResults();
     window.renderApp();
-
-    getWordData(window.dataStore.currentWord, window.dataStore.currentDictionary)
-      .then(data => {
-        // console.log(data);
-        window.dataStore.isWordDataLoading = false;
-
-        if (window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE DICTIONARY") {
-          window.dataStore.currentDictionaryCard = parseDataFromCollegiateResponse(data);
-        } else if (
-          window.dataStore.currentDictionary === "MERRIAM-WEBSTER'S COLLEGIATE THESAURUS"
-        ) {
-          window.dataStore.currentDictionaryCard = parseDataFromThesaurusResponse(data);
-        }
-      })
-      .catch(() => {
-        window.dataStore.wordDataError = 'Some error occurred. Try again!';
-      })
-      .finally(() => {
-        window.renderApp();
-      });
   }
 };
 
 window.changeCurrentDictionary = value => {
-  window.dataStore.currentDictionary = value;
   if (window.dataStore.currentWord === undefined) {
+    window.dataStore.currentDictionary = value;
     window.dataStore.currentDictionaryCard = `<div>
                             <img class="${styles.dictionaryCardBlock__cover}" src="${wmCover}" alt="merriam-webster's logo">
                             <p class="${styles.dictionaryCardBlock__coverTitle}">${window.dataStore.currentDictionary}</p>
                           </div>`;
+    window.renderApp();
   } else {
-    window.setCurrentDictionaryCard();
+    window.dataStore.currentDictionary = value;
+    window.dataStore.currentDictionaryCard = 'Loading... Please, wait!';
+    window.renderApp();
   }
 };
 
-window.setCurrentDictionaryCard = () => {
-  window.dataStore.currentDictionaryCard = getWordData(
-    window.dataStore.currentWord,
-    window.dataStore.currentDictionary,
-  );
-};
-
-window.createActiveText = str => {
-  let html = `<div id="activeInputContent"
-                   class="${styles.activeTextBlock}"
-                   onclick="window.activeTextHandler(event)">`;
-  str
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .split(' ')
-    .forEach(word => {
-      html += `<a href='#'
-                  class="${styles.activeTextBlock__word}"
-                  data-value="${word}">${word}</a> `;
-    });
-  html += '</div>';
-  return html;
-};
+// window.setCurrentDictionaryCard = () => {
+//   window.dataStore.currentDictionaryCard = getWordData(
+//     window.dataStore.currentWord,
+//     window.dataStore.currentDictionary,
+//   );
+// };
 
 const header = () => {
   return `<header class="${styles.header}">
@@ -499,6 +525,22 @@ const inputBlock = () => {
     Clear
   </button>
   </div>`;
+};
+
+const translationBlock = () => {
+  return `<div id="output" class="${styles.appRoot__item} ${styles.translationBlock}">
+            <div class="${styles.translationBlock__wrapper}">${window.dataStore.currentTranslation}</div>
+          </div>`;
+};
+
+const activeTextBlock = () => {
+  return `<div class="${styles.appRoot__item}">
+    ${window.dataStore.currentActiveText}
+  </div>`;
+};
+
+const dictionaryCardBlock = () => {
+  return `<div id="dictionaryCardBlock" class="${styles.appRoot__item} ${styles.dictionaryCardBlock}">${window.dataStore.currentDictionaryCard}</div>`;
 };
 
 const footer = () => {
@@ -524,61 +566,26 @@ const footer = () => {
   </footer>`;
 };
 
-const textTranslationResults = () => {
-  const translationBlock = content => {
-    return `<div id="output" class="${styles.appRoot__item} ${styles.translationBlock}">
-            <div class="${styles.translationBlock__wrapper}">${content}</div>
-          </div>`;
-  };
+// const wordDataResults = () => {
+//   let wordDataContent = '';
 
-  const activeTextBlock = content => {
-    return `<div class="${styles.appRoot__item}">
-    ${content}
-  </div>`;
-  };
-
-  let translationContent = '';
-  let activeTextContent = '';
-
-  if (window.dataStore.translationError !== null) {
-    translationContent = window.dataStore.translationError;
-    activeTextContent = window.dataStore.translationError;
-  } else if (window.dataStore.isTranslationLoading === false) {
-    translationContent = window.dataStore.currentTranslation;
-    activeTextContent = window.dataStore.currentActiveText;
-  } else {
-    translationContent = 'Loading... Please, wait!';
-    activeTextContent = window.dataStore.currentActiveText;
-  }
-  return `${translationBlock(translationContent)}
-          <br/>
-          ${activeTextBlock(activeTextContent)}`;
-};
-
-const wordDataResults = () => {
-  const dictionaryCardBlock = content => {
-    return `<div id="dictionaryCardBlock" class="${styles.appRoot__item} ${styles.dictionaryCardBlock}">${content}</div>`;
-  };
-  let wordDataContent = '';
-
-  if (window.dataStore.wordDataError !== null) {
-    wordDataContent = window.dataStore.wordDataError;
-  } else if (window.dataStore.isTranslationLoading === false) {
-    wordDataContent = window.dataStore.currentDictionaryCard;
-  } else {
-    wordDataContent = 'Loading... Please, wait!';
-  }
-  return `${dictionaryCardBlock(wordDataContent)}`;
-};
+//   if (window.dataStore.wordDataError !== null) {
+//     wordDataContent = window.dataStore.wordDataError;
+//   } else if (window.dataStore.isTranslationLoading === false) {
+//     wordDataContent = window.dataStore.currentDictionaryCard;
+//   } else {
+//     wordDataContent = 'Loading... Please, wait!';
+//   }
+//   return `${dictionaryCardBlock(wordDataContent)}`;
+// };
 
 const app = () => {
   return `<div class="${styles.appRootContainer}">
   ${header()}
   ${inputBlock()}
-  <br/>
-  ${textTranslationResults()}
-  <br/>
-  ${wordDataResults()}
+  ${translationBlock()}
+  ${activeTextBlock()}
+  ${dictionaryCardBlock()}
   ${footer()}
   </div>`;
 };
@@ -588,10 +595,12 @@ const ROOT = document.querySelector('#app-root');
 window.renderApp = () => {
   ROOT.classList.add(`${styles.appRoot}`);
   ROOT.innerHTML = app();
+  if (window.dataStore.currentInputtedText !== '') {
+    window.textTranslationResults();
+  }
+  if (window.dataStore.currentWord !== undefined) {
+    window.wordDataResults();
+  }
 };
 
 window.renderApp();
-
-// getTranslate(
-//   'Function Expression: When a function is assigned *&^%^#%%^$$#!sjd897987) to a variable. The function &*^klj782=++++364&^# can be named, or anonymous. Use the variable name to call a +_==-564 function defined in a function expression.',
-// );
