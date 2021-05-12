@@ -300,6 +300,10 @@ button {
   margin-right: 10px;
 }
 
+.wordCard__wordGroupTitle {
+  color: bisque;
+}
+
 .footer {
   position: fixed;
   bottom: 0;

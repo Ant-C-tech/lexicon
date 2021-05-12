@@ -364,10 +364,75 @@ window.wordDataResults = () => {
         dataItem['def'].forEach(item => {
           if (item['sseq'][0][0][1]['syn_list']) {
             dataItemCard += ` <div>
-                            <p><b class="${
-                              styles.wordCard__defListNum
-                            }">Synonyms of <i>${currentWord}</i>:</b></p>
+                            <p class="${
+                              styles.wordCard__wordGroupTitle
+                            }">Synonyms of <b><i>${currentWord}</i></b>:</p>
                             <div>${createWordList(item['sseq'][0][0][1]['syn_list'])}</div>
+                          </div>
+                          <hr>`;
+          }
+        });
+      }
+
+      if (dataItem['def']) {
+        dataItem['def'].forEach(item => {
+          if (item['sseq'][0][0][1]['sim_list']) {
+            dataItemCard += ` <div>
+                            <p class="${
+                              styles.wordCard__wordGroupTitle
+                            }">Synonyms and near synonyms of <b><i>${currentWord}</i></b>:</p>
+                            <div>${createWordList(item['sseq'][0][0][1]['sim_list'])}</div>
+                          </div>
+                          <hr>`;
+          }
+        });
+      }
+
+      if (dataItem['def']) {
+        dataItem['def'].forEach(item => {
+          if (item['sseq'][0][0][1]['rel_list']) {
+            dataItemCard += ` <div>
+                            <p class="${
+                              styles.wordCard__wordGroupTitle
+                            }">Words Related to <b><i>${currentWord}</i></b>:</p>
+                            <div>${createWordList(item['sseq'][0][0][1]['rel_list'])}</div>
+                          </div>
+                          <hr>`;
+          }
+        });
+      }
+
+      if (dataItem['def']) {
+        dataItem['def'].forEach(item => {
+          if (item['sseq'][0][0][1]['near_list']) {
+            dataItemCard += ` <div>
+                            <p class="${
+                              styles.wordCard__wordGroupTitle
+                            }">Near Antonyms for <b><i>${currentWord}</i></b>:</p>
+                            <div>${createWordList(item['sseq'][0][0][1]['near_list'])}</div>
+                          </div>
+                          <hr>`;
+          }
+          if (item['sseq'][0][0][1]['opp_list']) {
+            dataItemCard += ` <div>
+                            <p class="${
+                              styles.wordCard__wordGroupTitle
+                            }">Near Antonyms for <b><i>${currentWord}</i></b>:</p>
+                            <div>${createWordList(item['sseq'][0][0][1]['opp_list'])}</div>
+                          </div>
+                          <hr>`;
+          }
+        });
+      }
+
+      if (dataItem['def']) {
+        dataItem['def'].forEach(item => {
+          if (item['sseq'][0][0][1]['ant_list']) {
+            dataItemCard += ` <div>
+                            <p class="${
+                              styles.wordCard__wordGroupTitle
+                            }">Antonyms for <b><i>${currentWord}</i></b>:</p>
+                            <div>${createWordList(item['sseq'][0][0][1]['ant_list'])}</div>
                           </div>
                           <hr>`;
           }
@@ -402,8 +467,12 @@ window.wordDataResults = () => {
 
     //           </div>`;
   };
+  const getPunctuationLessWord = str => str.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, '');
 
-  getWordData(window.dataStore.currentWord, window.dataStore.currentDictionary)
+  getWordData(
+    getPunctuationLessWord(window.dataStore.currentWord),
+    window.dataStore.currentDictionary,
+  )
     .then(data => {
       window.dataStore.isWordDataLoading = false;
 
