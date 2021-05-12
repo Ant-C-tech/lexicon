@@ -483,7 +483,8 @@ window.wordDataResults = () => {
       }
     })
     .catch(() => {
-      currentDictionaryCard = 'Some error occurred. Try again!';
+      window.dataStore.currentDictionaryCard = 'Some error occurred. Try again!';
+      window.dataStore.currentWord = undefined;
     })
     .finally(() => {
       window.renderApp();
