@@ -163,7 +163,7 @@ button {
   height: 100%;
   overflow: auto;
 
-  padding-right: 10px;
+  padding: 10px;
 
   line-height: 2;
 }
@@ -191,6 +191,18 @@ button {
   border-radius: 3px;
   text-decoration: none;
   background: rgba(40, 111, 113, 0.2);
+  transition: background ease-in-out 0.3;
+}
+
+.activeTextBlock__word:focus,
+.activeTextBlock__word:hover {
+  outline: none;
+  background: rgba(28, 79, 80, 0.4);
+}
+
+.activeTextBlock__word:active {
+  outline: none;
+  background: rgba(170, 135, 105, 1);
 }
 
 .dictionaryCardBlock {
